@@ -16,14 +16,14 @@ const Classes = () => {
   return (
     <>
        <Navbar title="Classes" showBackButton={false} />
-      <div className="p-8">
+      <div className="p-8 w-full h-full ">
         <h1 className="text-2xl text-gray-800 font-bold mb-4">Classes</h1>
-        <div className="space-y-4 w-60">
+        <div className="grid-cols-2">
           {batchNames.length > 0 ? (
             batchNames.map((batchName, index) => (
               <button
                 key={index}
-                className="block w-full p-4 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                className="relative h-24 gap-6 justify-between p-4 m-11 bg-blue-500 text-white rounded-md hover:bg-blue-600"
                 onClick={() => handleNavigation(batchName)}
               >
                 {batchName.toUpperCase()}
