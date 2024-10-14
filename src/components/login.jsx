@@ -22,7 +22,6 @@ const Login = () => {
     setLoading(true);
     setError("");
     setSuccessMessage("");
-    console.log(url);
     const API_URL = `${url}/profile/login`;
     const loginData = { userId, password };
 

@@ -63,7 +63,7 @@ const Dashboard = () => {
       const response = await axios.put(`${import.meta.env.VITE_API}/attendance/update`, {
         userId: updatedUser.userId,
         batch_name: batchName,
-        attendance: updatedUser.present==="present" ? true: false,
+        attendance: updatedUser.present==="present" ? false: true,
       });
 
       if (response.status === 201) {
