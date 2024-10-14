@@ -26,7 +26,7 @@ const Dashboard = () => {
     const fetchAttendanceData = async () => {
       setLoading(true); // Start loading
       try {
-        const response = await axios.post(`${import.meta.env.server}/profile/view`, {
+        const response = await axios.post(`${import.meta.env.VITE_API}/profile/view`, {
           batch_name: batchName
         });
         const allAttendanceRecords = response.data;
@@ -60,7 +60,7 @@ const Dashboard = () => {
 
     // Prepare the attendance status to send to the server
     try {
-      const response = await axios.put(`${import.meta.env.server}/attendance/update`, {
+      const response = await axios.put(`${import.meta.env.VITE_API}/attendance/update`, {
         userId: updatedUser.userId,
         batch_name: batchName,
         attendance: updatedUser.present==="present" ? true: false,
@@ -99,7 +99,7 @@ const Dashboard = () => {
     onOpenChange(false); 
   
     try {
-      const response = await axios.delete(`${import.meta.env.server}/attendance/delete`, {
+      const response = await axios.delete(`${import.meta.env.VITE_API}/attendance/delete`, {
         data: {
           batch_name: batchName // Pass the batch_name here
         }

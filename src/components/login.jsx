@@ -23,7 +23,7 @@ const Login = () => {
     setError("");
     setSuccessMessage("");
 
-    const API_URL = `${import.meta.env.server}/profile/login`;
+    const API_URL = `${import.meta.env.VITE_API}/profile/login`;
     const loginData = { userId, password };
 
     try {

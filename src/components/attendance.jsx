@@ -17,7 +17,7 @@ const Attendance = () => {
 
   const fetchToken = useCallback(async () => {
     try {
-      const response = await axios.put(`${import.meta.env.server}/batch/generate`, {
+      const response = await axios.put(`${import.meta.env.VITE_API}/batch/generate`, {
         batch_name: batchName,
       });
 
