@@ -14,7 +14,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false); // To control the Snackbar
-
+  const url = import.meta.env.VITE_API;
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -22,8 +22,8 @@ const Login = () => {
     setLoading(true);
     setError("");
     setSuccessMessage("");
-
-    const API_URL = `${import.meta.env.VITE_API}/profile/login`;
+    console.log(url);
+    const API_URL = `${url}/profile/login`;
     const loginData = { userId, password };
 
     try {
