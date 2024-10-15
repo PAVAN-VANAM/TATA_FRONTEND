@@ -48,7 +48,7 @@ const Dashboard = () => {
     };
 
     fetchAttendanceData();
-  }, [fetch, batchName]);
+  }, [fetch]);
 
   const toggleAttendance = async (student) => {
     const updatedUser = { ...student, present: student.present === "Present" ? "Absent" : "Present" };
@@ -60,15 +60,18 @@ const Dashboard = () => {
 
     // Prepare the attendance status to send to the server
     try {
-      const response = await axios.put(`${import.meta.env.VITE_API}/attendance/update`, {
+      //console.log(updatedUser);
+      const response = await axios.post(`${import.meta.env.VITE_API}/attendance/update`, {
         userId: updatedUser.userId,
         batch_name: batchName,
-        attendance: updatedUser.present==="Present" ? false: true,
+        attendance: (updatedUser.present=="Present")? true: false,
       });
 
-      if (response.status === 201) {
+      if (response.status === 200) {
         setSuccessMessage("Attendance updated successfully");
+        //console.log(response);
         setOpenSnackbar(true); // Open success Snackbar
+        reload();
       } else {
         console.log("Failed to update attendance:", response.data.message);
         setStudents((prevStudents) =>
@@ -107,7 +110,7 @@ const Dashboard = () => {
   
       // Handle successful deletion
       if (response.status === 200) {
-        setStudents([]); // Clear the student list on successful deletion
+        reload(); // Clear the student list on successful deletion
         setSuccessMessage(response.data.msg); // Set success message
         setOpenSnackbar(true); // Open success Snackbar
       } else {
@@ -247,7 +250,7 @@ const Dashboard = () => {
       {/* MUI Snackbar and Alert */}
       <Snackbar
         open={openSnackbar}
-        autoHideDuration={4000}
+        autoHideDuration={2000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
