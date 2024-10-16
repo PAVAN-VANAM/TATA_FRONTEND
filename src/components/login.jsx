@@ -22,7 +22,7 @@ const Login = () => {
     setLoading(true);
     setError("");
     setSuccessMessage("");
-    const API_URL = `${url}/profile/login`;
+    const API_URL = `${url}/profile/faculty/login`;
     const loginData = { userId, password };
 
     try {
