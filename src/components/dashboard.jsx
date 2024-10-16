@@ -1,16 +1,19 @@
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Pagination } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Navbar from "./navbar";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress'; // For loading animation
 
 const Dashboard = () => {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false); // Table specific loading
   const [successMessage, setSuccessMessage] = useState("");
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -21,10 +24,9 @@ const Dashboard = () => {
   const location = useLocation();
   const batchName = location.state?.batchName || "Unknown Batch";
 
-  // Fetch attendance data from API
   useEffect(() => {
     const fetchAttendanceData = async () => {
-      setLoading(true); // Start loading
+      setLoading(true); // Start loading for the entire page
       try {
         const response = await axios.post(`${import.meta.env.VITE_API}/profile/view`, {
           batch_name: batchName
@@ -53,40 +55,37 @@ const Dashboard = () => {
   const toggleAttendance = async (student) => {
     const updatedUser = { ...student, present: student.present === "Present" ? "Absent" : "Present" };
     
-    // Optimistically update the attendance status
     setStudents((prevStudents) =>
       prevStudents.map((s) => (s.id === student.id ? updatedUser : s))
     );
 
-    // Prepare the attendance status to send to the server
+    setTableLoading(true); // Start table loading for updates
+
     try {
-      //console.log(updatedUser);
       const response = await axios.post(`${import.meta.env.VITE_API}/attendance/update`, {
         userId: updatedUser.userId,
         batch_name: batchName,
-        attendance: (updatedUser.present=="Present")? true: false,
+        attendance: (updatedUser.present === "Present") ? true : false,
       });
 
       if (response.status === 200) {
         setSuccessMessage("Attendance updated successfully");
-        //console.log(response);
         setOpenSnackbar(true); // Open success Snackbar
-        reload();
       } else {
         console.log("Failed to update attendance:", response.data.message);
         setStudents((prevStudents) =>
           prevStudents.map((s) => (s.id === student.id ? student : s))
         );
         setErrorMessage("Failed to update attendance.");
-
       }
     } catch (error) {
       console.error("Error while updating attendance:", error);
-      // Revert to previous state if there's an error
       setStudents((prevStudents) =>
         prevStudents.map((s) => (s.id === student.id ? student : s))
       );
       setErrorMessage("Failed to update attendance.");
+    } finally {
+      setTableLoading(false); // End table loading
     }
   };
 
@@ -98,36 +97,32 @@ const Dashboard = () => {
   };
 
   const deleteAllStudents = async () => {
-    // Close modal first to avoid any UI delays
     onOpenChange(false); 
   
     try {
       const response = await axios.delete(`${import.meta.env.VITE_API}/attendance/delete`, {
         data: {
-          batch_name: batchName // Pass the batch_name here
+          batch_name: batchName
         }
       });
   
-      // Handle successful deletion
       if (response.status === 200) {
-        reload(); // Clear the student list on successful deletion
-        setSuccessMessage(response.data.msg); // Set success message
-        setOpenSnackbar(true); // Open success Snackbar
+        reload();
+        setSuccessMessage(response.data.msg);
+        setOpenSnackbar(true);
       } else {
         console.error("Failed to delete attendance records:", response.data.message);
       }
     } catch (error) {
       console.error("Error deleting attendance records:", error);
-      // Optionally handle error, e.g., show an error Snackbar
     }
   };
-  
 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(students);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Present Students");
-    const timestamp = new Date().toISOString().replace(/[:.-]/g, '_'); // Creates a timestamp
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, '_'); 
     XLSX.writeFile(workbook, `Present_Students_${batchName}_${timestamp}.xlsx`);
   };
 
@@ -138,7 +133,10 @@ const Dashboard = () => {
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
   const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
 
   if (loading) {
     return <div>Loading...</div>;
@@ -149,7 +147,7 @@ const Dashboard = () => {
       <Navbar title={`Attendance - ${batchName.toUpperCase()}`} showBackButton={true} />
       <div className={`p-10 transition ${isOpen ? "blur-sm" : ""}`}>
         <h1 className="text-2xl font-bold mb-5">{batchName.toUpperCase()} Attendance Dashboard</h1>
-
+       
         <button
           onClick={downloadExcel}
           className="bg-green-500 text-white py-2 px-4 m-2 rounded-md mb-5 hover:bg-green-700"
@@ -171,41 +169,58 @@ const Dashboard = () => {
           Delete All Students
         </button>
 
-        <table className="min-w-full bg-white mb-5">
-          <thead>
-            <tr>
-              <th className="py-2">Serial No</th>
-              <th className="py-2">User ID</th>
-              <th className="py-2">Name</th>
-              <th className="py-2">Batch</th>
-              <th className="py-2">Department</th>
-              <th className="py-2">Attendance</th>
-              <th className="py-2">Edit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {currentStudents.map((student) => (
-              <tr key={student.id}>
-                <td className="border px-4 py-2">{student.id}</td>
-                <td className="border px-4 py-2">{student.userId}</td>
-                <td className="border px-4 py-2">{student.name}</td>
-                <td className="border px-4 py-2">{batchName}</td>
-                <td className="border px-4 py-2">{student.department}</td>
-                <td className={`${student.present=="Present"  ? "text-green-600 text-xl border px-4 py-2": "text-red-700 text-xl border px-4 py-2"}`}>{student.present}</td>
-                <td className="border px-4 py-2">
-                  <button
-                    onClick={() => toggleAttendance(student)}
-                    className="bg-blue-500 text-white py-1 px-2 rounded-md hover:bg-blue-700"
-                  >
-                    Edit
-                  </button>
-                </td>
+        {/* Show loading animation while fetching or updating table data */}
+        {tableLoading ? (
+          <div className="flex justify-center">
+            <CircularProgress />
+          </div>
+        ) : (
+          <table className="min-w-full bg-white mb-5">
+            <thead>
+              <tr>
+                <th className="py-2">Serial No</th>
+                <th className="py-2">User ID</th>
+                <th className="py-2">Name</th>
+                <th className="py-2">Batch</th>
+                <th className="py-2">Department</th>
+                <th className="py-2">Attendance</th>
+                <th className="py-2">Edit</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {currentStudents.map((student) => (
+                <tr key={student.id}>
+                  <td className="border px-4 py-2">{student.id}</td>
+                  <td className="border px-4 py-2">{student.userId}</td>
+                  <td className="border px-4 py-2">{student.name}</td>
+                  <td className="border px-4 py-2">{batchName}</td>
+                  <td className="border px-4 py-2">{student.department}</td>
+                  <td className={`${student.present === "Present"  ? "text-green-600 text-xl border px-4 py-2": "text-red-700 text-xl border px-4 py-2"}`}>{student.present}</td>
+                  <td className="border px-4 py-2">
+                    <button
+                      onClick={() => toggleAttendance(student)}
+                      className="bg-blue-500 text-white py-1 px-2 rounded-md hover:bg-blue-700"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
 
-        <Pagination total={Math.ceil(students.length / studentsPerPage)} page={currentPage} onChange={paginate} />
+        {/* MUI Pagination */}
+        <Stack spacing={2} alignItems="center">
+          <Pagination
+            count={Math.ceil(students.length / studentsPerPage)}
+            page={currentPage}
+            onChange={handlePageChange}
+            shape="rounded"
+            color="primary"
+          />
+        </Stack>
+        
       </div>
 
       <Modal
@@ -226,20 +241,11 @@ const Dashboard = () => {
                 </p>
               </ModalBody>
               <ModalFooter className="flex justify-center gap-3">
-                <Button
-                  color="danger"
-                  variant="light"
-                  className="w-24 py-2"
-                  onPress={onClose}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  color="primary"
-                  className="w-24 py-2"
-                  onPress={deleteAllStudents}
-                >
+                <Button color="danger" onPress={deleteAllStudents}>
                   Confirm
+                </Button>
+                <Button color="default" onPress={onClose}>
+                  Cancel
                 </Button>
               </ModalFooter>
             </>
@@ -247,29 +253,24 @@ const Dashboard = () => {
         </ModalContent>
       </Modal>
 
-      {/* MUI Snackbar and Alert */}
+      {/* Success Snackbar */}
       <Snackbar
         open={openSnackbar}
-        autoHideDuration={2000}
+        autoHideDuration={3000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
           {successMessage}
         </Alert>
       </Snackbar>
 
-      {/* Error Snackbar */}
-      <Snackbar
-        open={!!errorMessage}
-        autoHideDuration={2000}
-        onClose={() => setErrorMessage("")}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setErrorMessage("")} severity="error" sx={{ width: '100%' }}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-5">
+          <p>{errorMessage}</p>
+        </div>
+      )}
     </>
   );
 };
