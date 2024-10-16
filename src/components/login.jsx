@@ -1,11 +1,11 @@
-import  { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Logo from '../ace_logo.png';
+import Logo from "../ace_logo.png";
 
 // MUI Components
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 
 const Login = () => {
   const [userId, setuserId] = useState("");
@@ -33,9 +33,12 @@ const Login = () => {
       });
 
       const data = response.data;
-      if (response.status === 200) {
+      if (response.status == 200) {
         localStorage.setItem("userId", data.user.userId);
-        localStorage.setItem("batchNames",  JSON.stringify(data.user.batchNames));
+        localStorage.setItem(
+          "batchNames",
+          JSON.stringify(data.user.batchNames)
+        );
         setSuccessMessage("Login successful!");
         setOpenSnackbar(true); // Open success Snackbar
         setTimeout(() => {
@@ -57,7 +60,7 @@ const Login = () => {
   };
 
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setOpenSnackbar(false);
@@ -110,9 +113,13 @@ const Login = () => {
         open={openSnackbar}
         autoHideDuration={2000}
         onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {successMessage}
         </Alert>
       </Snackbar>
