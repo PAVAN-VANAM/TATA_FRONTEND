@@ -1,16 +1,24 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Button,
+  useDisclosure,
+} from "@nextui-org/react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Navbar from "./navbar";
-import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
-import Pagination from '@mui/material/Pagination';
-import Stack from '@mui/material/Stack';
-import CircularProgress from '@mui/material/CircularProgress'; // For loading animation
-import { Box } from '@mui/material';
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
+import Pagination from "@mui/material/Pagination";
+import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress"; // For loading animation
+import { Box } from "@mui/material";
 
 const Dashboard = () => {
   const [students, setStudents] = useState([]);
@@ -25,16 +33,22 @@ const Dashboard = () => {
   const location = useLocation();
   const batchName = location.state?.batchName || "Unknown Batch";
   const [changedStudents, setChangedStudents] = useState([]);
-  
 
-  // Fetch attendance data from API
+  const [searchText, setSearchText] = useState("");
+  const [departments, setDepartments] = useState([]); // List of departments from backend
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [attendanceStatus, setAttendanceStatus] = useState("All"); // Present, Absent, or All
+
   useEffect(() => {
     const fetchAttendanceData = async () => {
-      setLoading(true); // Start loading
+      setLoading(true);
       try {
-        const response = await axios.post(`${import.meta.env.VITE_API}/profile/view`, {
-          batch_name: batchName
-        });
+        const response = await axios.post(
+          `${import.meta.env.VITE_API}/profile/view`,
+          {
+            batch_name: batchName,
+          }
+        );
         const allAttendanceRecords = response.data;
 
         const formattedStudents = allAttendanceRecords.map((record, index) => ({
@@ -42,28 +56,59 @@ const Dashboard = () => {
           userId: record.userId,
           name: record.name,
           department: record.department,
-          present: record.attendance.length > 0 ? "Present" : "Absent"
+          present: record.attendance.length > 0 ? "Present" : "Absent",
         }));
         setStudents(formattedStudents);
       } catch (error) {
         console.error("Error fetching attendance data:", error.message);
         setErrorMessage("Failed to fetch attendance data.");
       } finally {
-        setLoading(false); // End loading
+        setLoading(false);
+      }
+    };
+
+    const fetchDepartments = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API}/departments`
+        ); // Adjust this endpoint as needed
+        setDepartments(response.data);
+      } catch (error) {
+        console.error("Error fetching departments:", error.message);
       }
     };
 
     fetchAttendanceData();
+    fetchDepartments();
   }, [fetch]);
 
+  // Filter students based on search, department, and attendance status
+  const filteredStudents = students.filter((student) => {
+    const matchesSearchText =
+      student.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      student.userId.toLowerCase().includes(searchText.toLowerCase());
+
+    const matchesDepartment = selectedDepartment
+      ? student.department === selectedDepartment
+      : true;
+
+    const matchesAttendanceStatus =
+      attendanceStatus === "All" || student.present === attendanceStatus;
+
+    return matchesSearchText && matchesDepartment && matchesAttendanceStatus;
+  });
+
   const toggleAttendance = (student) => {
-    const updatedUser = { ...student, present: student.present === "Present" ? "Absent" : "Present" };
-  
+    const updatedUser = {
+      ...student,
+      present: student.present === "Present" ? "Absent" : "Present",
+    };
+
     // Optimistically update the attendance status
     setStudents((prevStudents) =>
       prevStudents.map((s) => (s.id === student.id ? updatedUser : s))
     );
-  
+
     // Add or update the student in the changedStudents list
     setChangedStudents((prevChanges) => {
       const alreadyChanged = prevChanges.find((s) => s.id === student.id);
@@ -76,69 +121,66 @@ const Dashboard = () => {
       }
     });
   };
-  
-  // Function to handle the batch update of attendance when the update button is clicked
+
   const updateAllAttendance = async () => {
     try {
-      console.log(changedStudents);
-      console.log(batchName);
-      const response = await axios.post(`${import.meta.env.VITE_API}/attendance/update`, {
-        students: changedStudents,
-        batch_name: batchName,
-      });
-  
+      setLoading(true);
+      const response = await axios.post(
+        `${import.meta.env.VITE_API}/attendance/update`,
+        {
+          students: changedStudents,
+          batch_name: batchName,
+        }
+      );
+
       if (response.status === 200) {
         setSuccessMessage("Attendance updated successfully for all students");
-        setOpenSnackbar(true); // Open success Snackbar
+        setOpenSnackbar(true);
         reload();
-        setChangedStudents([]); // Clear the list of changed students
+        setChangedStudents([]);
       } else {
-        console.log("Failed to update attendance:", response.data.message);
         setErrorMessage("Failed to update attendance for all students.");
       }
     } catch (error) {
-      console.error("Error while updating attendance:", error);
       setErrorMessage("Failed to update attendance for all students.");
     }
   };
+
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setOpenSnackbar(false);
   };
 
   const deleteAllStudents = async () => {
-    // Close modal first to avoid any UI delays
-    onOpenChange(false); 
-  
+    onOpenChange(false);
+
     try {
-      const response = await axios.delete(`${import.meta.env.VITE_API}/attendance/delete`, {
-        data: {
-          batch_name: batchName // Pass the batch_name here
+      const response = await axios.delete(
+        `${import.meta.env.VITE_API}/attendance/delete`,
+        {
+          data: {
+            batch_name: batchName,
+          },
         }
-      });
-  
-      // Handle successful deletion
+      );
+
       if (response.status === 200) {
-        reload(); // Clear the student list on successful deletion
-        setSuccessMessage(response.data.msg); // Set success message
-        setOpenSnackbar(true); // Open success Snackbar
-      } else {
-        console.error("Failed to delete attendance records:", response.data.message);
+        reload();
+        setSuccessMessage(response.data.msg);
+        setOpenSnackbar(true);
       }
     } catch (error) {
       console.error("Error deleting attendance records:", error);
-      // Optionally handle error, e.g., show an error Snackbar
     }
   };
-  
 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(students);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Present Students");
-    const timestamp = new Date().toISOString().replace(/[:.-]/g, '_'); // Creates a timestamp
+    const timestamp = new Date().toISOString().replace(/[:.-]/g, "_");
     XLSX.writeFile(workbook, `Present_Students_${batchName}_${timestamp}.xlsx`);
   };
 
@@ -148,29 +190,78 @@ const Dashboard = () => {
 
   const indexOfLastStudent = currentPage * studentsPerPage;
   const indexOfFirstStudent = indexOfLastStudent - studentsPerPage;
-  const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  
-
-if (loading) {
-  return (
-    <Box 
-      sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-      <CircularProgress />
-    </Box>
+  const currentStudents = filteredStudents.slice(
+    indexOfFirstStudent,
+    indexOfLastStudent
   );
-}
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
   };
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <>
-      <Navbar title={`Attendance - ${batchName.toUpperCase()}`} showBackButton={true} />
+      <Navbar
+        title={`Attendance - ${batchName.toUpperCase()}`}
+        showBackButton={true}
+      />
       <div className={`p-10 transition ${isOpen ? "blur-sm" : ""}`}>
-        <h1 className="text-2xl font-bold mb-5">{batchName.toUpperCase()} Attendance Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-5">
+          {batchName.toUpperCase()} Attendance Dashboard
+        </h1>
+
+        {/* Search Bar */}
+        <input
+          type="text"
+          placeholder="Search by name or user ID"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="border p-2 rounded m-2 w-full"
+        />
+        {/* console.log(department); */}
+
+        {/* Department Filter */}
+        <select
+          value={selectedDepartment} // Correctly bound to selectedDepartment
+          onChange={(e) => setSelectedDepartment(e.target.value)} // Correctly updating selectedDepartment
+          className="p-2 border border-gray-400 rounded-md"
+        >
+          <option value="">All Departments</option>
+          {/* Map all distinct departments */}
+          {Array.from(
+            new Set(students.map((student) => student.department))
+          ).map((dept) => (
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
+          ))}
+        </select>
+
+        {/* Attendance Status Filter */}
+        <select
+          value={attendanceStatus}
+          onChange={(e) => setAttendanceStatus(e.target.value)}
+          className="border p-2 rounded m-2"
+        >
+          <option value="All">All Attendance</option>
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+        </select>
 
         <button
           onClick={downloadExcel}
@@ -193,36 +284,48 @@ if (loading) {
           Delete All Students
         </button>
 
-        <button className="bg-blue-500 text-white py-2 px-4 m-5 rounded-md hover:bg-blue-700" onClick={updateAllAttendance}>Update All Attendance</button>
+        <button
+          className="bg-blue-500 text-white py-2 px-4 m-5 rounded-md hover:bg-blue-700"
+          onClick={updateAllAttendance}
+        >
+          Update All Attendance
+        </button>
 
-
-        <table className="min-w-full bg-white mb-5">
+        <table className="min-w-full bg-white mb-10">
           <thead>
             <tr>
-              <th className="py-2">Serial No</th>
+              <th className="py-2">ID</th>
               <th className="py-2">User ID</th>
               <th className="py-2">Name</th>
-              <th className="py-2">Batch</th>
               <th className="py-2">Department</th>
               <th className="py-2">Attendance</th>
-              <th className="py-2">Edit</th>
+              <th className="py-2">Toggle</th>
             </tr>
           </thead>
           <tbody>
             {currentStudents.map((student) => (
               <tr key={student.id}>
-                <td className="border px-4 py-2">{student.id}</td>
-                <td className="border px-4 py-2">{student.userId}</td>
-                <td className="border px-4 py-2">{student.name}</td>
-                <td className="border px-4 py-2">{batchName}</td>
-                <td className="border px-4 py-2">{student.department}</td>
-                <td className={`${student.present=="Present"  ? "text-green-600 text-xl border px-4 py-2": "text-red-700 text-xl border px-4 py-2"}`}>{student.present}</td>
-                <td className="border px-4 py-2">
+                <td className="text-center py-2">{student.id}</td>
+                <td className="text-center py-2">{student.userId}</td>
+                <td className="text-center py-2">{student.name}</td>
+                <td className="text-center py-2">{student.department}</td>
+                <td className={`text-center py-2 ${
+                      student.present === "Present"
+                        ? "bg-green-200"
+                        : "bg-red-200"
+                    } `}>{student.present}</td>
+                <td className="text-center py-2">
                   <button
+                    className={`px-4 py-1 rounded ${
+                      student.present === "Present"
+                        ? "bg-red-500"
+                        : "bg-green-500"
+                    } text-white`}
                     onClick={() => toggleAttendance(student)}
-                    className="bg-blue-500 text-white py-1 px-2 rounded-md hover:bg-blue-700"
                   >
-                    Edit
+                    {student.present === "Present"
+                      ? "Mark Absent"
+                      : "Mark Present"}
                   </button>
                 </td>
               </tr>
@@ -230,81 +333,70 @@ if (loading) {
           </tbody>
         </table>
 
-        {/* <Pagination total={Math.ceil(students.length / studentsPerPage)} page={currentPage} onChange={paginate} /> */}
-        {/* MUI Pagination */}
-        <Stack spacing={2} alignItems="center">
+        {/* Pagination */}
+        <Stack spacing={2}>
           <Pagination
-            count={Math.ceil(students.length / studentsPerPage)}
+            count={Math.ceil(filteredStudents.length / studentsPerPage)}
             page={currentPage}
             onChange={handlePageChange}
-            shape="rounded"
             color="primary"
           />
         </Stack>
+
+        {/* Snackbar for success or error messages */}
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity="success"
+            sx={{ width: "100%" }}
+          >
+            {successMessage}
+          </Alert>
+        </Snackbar>
       </div>
 
       <Modal
         isOpen={isOpen}
         onOpenChange={onOpenChange}
-        className="fixed inset-0 h-[300px] flex items-center justify-center"
+        backdrop="blur"
+        placement="center"
+        className="bg-white flex justify-center items-center border h-[220px]"
       >
-        <ModalContent className="bg-white shadow-lg rounded-lg border p-6 max-w-lg mx-auto">
+        <ModalContent>
           {(onClose) => (
             <>
-              <ModalHeader className="flex flex-col gap-1 text-xl font-semibold text-red-600 text-center">
-                Confirm Deletion
+              <ModalHeader className="flex flex-col gap-1">
+                Delete Attendance Records?
               </ModalHeader>
-              <ModalBody className="text-center">
-                <p className="text-gray-600">
-                  Are you sure you want to delete all students from the list?
-                  This action cannot be undone.
+              <ModalBody>
+                <p className="text-red-500">
+                  Are you sure you want to delete all attendance records for
+                  this batch?
                 </p>
               </ModalBody>
-              <ModalFooter className="flex justify-center gap-3">
+              <ModalFooter>
                 <Button
                   color="danger"
-                  variant="light"
-                  className="w-24 py-2"
                   onPress={onClose}
+                  className="mr-2 bg-slate-200 rounded-md"
                 >
-                  Cancel
+                  Close
                 </Button>
                 <Button
-                  color="primary"
-                  className="w-24 py-2"
+                  className="bg-red-500 rounded-lg h-10 px-2 text-white"
                   onPress={deleteAllStudents}
                 >
-                  Confirm
+                  Yes, Delete All
                 </Button>
               </ModalFooter>
             </>
           )}
         </ModalContent>
       </Modal>
-
-      {/* MUI Snackbar and Alert */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={2000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={handleSnackbarClose} severity="success" sx={{ width: '100%' }}>
-          {successMessage}
-        </Alert>
-      </Snackbar>
-
-      {/* Error Snackbar */}
-      <Snackbar
-        open={!!errorMessage}
-        autoHideDuration={2000}
-        onClose={() => setErrorMessage("")}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert onClose={() => setErrorMessage("")} severity="error" sx={{ width: '100%' }}>
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </>
   );
 };
