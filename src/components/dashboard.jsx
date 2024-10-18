@@ -1,13 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure, Pagination } from "@nextui-org/react";
+import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Button, useDisclosure } from "@nextui-org/react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import Navbar from "./navbar";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
-
+import Pagination from '@mui/material/Pagination';
+import Stack from '@mui/material/Stack';
+import CircularProgress from '@mui/material/CircularProgress'; // For loading animation
+import { Box } from '@mui/material';
 
 const Dashboard = () => {
   const [students, setStudents] = useState([]);
@@ -148,9 +151,20 @@ const Dashboard = () => {
   const currentStudents = students.slice(indexOfFirstStudent, indexOfLastStudent);
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  
+
+if (loading) {
+  return (
+    <Box 
+      sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <CircularProgress />
+    </Box>
+  );
+}
+
+  const handlePageChange = (event, value) => {
+    setCurrentPage(value);
+  };
 
   return (
     <>
@@ -174,12 +188,12 @@ const Dashboard = () => {
 
         <button
           onClick={onOpen}
-          className="bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-700"
+          className="bg-red-500 text-white py-2 px-6 rounded-md hover:bg-red-700"
         >
           Delete All Students
         </button>
 
-        <button className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700" onClick={updateAllAttendance}>Update All Attendance</button>
+        <button className="bg-blue-500 text-white py-2 px-4 m-5 rounded-md hover:bg-blue-700" onClick={updateAllAttendance}>Update All Attendance</button>
 
 
         <table className="min-w-full bg-white mb-5">
@@ -216,7 +230,17 @@ const Dashboard = () => {
           </tbody>
         </table>
 
-        <Pagination total={Math.ceil(students.length / studentsPerPage)} page={currentPage} onChange={paginate} />
+        {/* <Pagination total={Math.ceil(students.length / studentsPerPage)} page={currentPage} onChange={paginate} /> */}
+        {/* MUI Pagination */}
+        <Stack spacing={2} alignItems="center">
+          <Pagination
+            count={Math.ceil(students.length / studentsPerPage)}
+            page={currentPage}
+            onChange={handlePageChange}
+            shape="rounded"
+            color="primary"
+          />
+        </Stack>
       </div>
 
       <Modal
