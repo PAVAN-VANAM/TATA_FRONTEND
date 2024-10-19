@@ -42,7 +42,7 @@ const Attendance = () => {
       return;
     }
 
-    QRCode.toCanvas(canvas, tokenToUse, { width: 512, scale:20 }, (error) => {
+    QRCode.toCanvas(canvas, tokenToUse, { width: 512  , scale:0 ,errorCorrectionLevel: 'H'}, (error) => {
       if (error) console.error("Error generating QR Code:", error);
     });
   }, []);

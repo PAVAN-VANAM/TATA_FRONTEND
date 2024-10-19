@@ -153,31 +153,11 @@ const Dashboard = () => {
     setOpenSnackbar(false);
   };
 
-  const deleteAllStudents = async () => {
-    onOpenChange(false);
-
-    try {
-      const response = await axios.delete(
-        `${import.meta.env.VITE_API}/attendance/delete`,
-        {
-          data: {
-            batch_name: batchName,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        reload();
-        setSuccessMessage(response.data.msg);
-        setOpenSnackbar(true);
-      }
-    } catch (error) {
-      console.error("Error deleting attendance records:", error);
-    }
-  };
+  
 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(students);
+    worksheet['E1'].v = formattedDate;
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Present Students");
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "_");
@@ -213,7 +193,14 @@ const Dashboard = () => {
       </Box>
     );
   }
+  const today = new Date();
 
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0"); // getMonth() returns 0-11
+  const day = String(today.getDate()).padStart(2, "0");
+  
+  const formattedDate = `${day}-${month}-${year}`;
+  console.log(formattedDate);
   return (
     <>
       <Navbar
@@ -278,13 +265,6 @@ const Dashboard = () => {
         </button>
 
         <button
-          onClick={onOpen}
-          className="bg-red-500 text-white py-2 px-6 rounded-md hover:bg-red-700"
-        >
-          Delete All Students
-        </button>
-
-        <button
           className="bg-blue-500 text-white py-2 px-4 m-5 rounded-md hover:bg-blue-700"
           onClick={updateAllAttendance}
         >
@@ -298,7 +278,7 @@ const Dashboard = () => {
               <th className="py-2">User ID</th>
               <th className="py-2">Name</th>
               <th className="py-2">Department</th>
-              <th className="py-2">Attendance</th>
+              <th className="py-2">Attendance- {formattedDate}</th>
               <th className="py-2">Toggle</th>
             </tr>
           </thead>
@@ -359,44 +339,7 @@ const Dashboard = () => {
         </Snackbar>
       </div>
 
-      <Modal
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        backdrop="blur"
-        placement="center"
-        className="bg-white flex justify-center items-center border h-[220px]"
-      >
-        <ModalContent>
-          {(onClose) => (
-            <>
-              <ModalHeader className="flex flex-col gap-1">
-                Delete Attendance Records?
-              </ModalHeader>
-              <ModalBody>
-                <p className="text-red-500">
-                  Are you sure you want to delete all attendance records for
-                  this batch?
-                </p>
-              </ModalBody>
-              <ModalFooter>
-                <Button
-                  color="danger"
-                  onPress={onClose}
-                  className="mr-2 bg-slate-200 rounded-md"
-                >
-                  Close
-                </Button>
-                <Button
-                  className="bg-red-500 rounded-lg h-10 px-2 text-white"
-                  onPress={deleteAllStudents}
-                >
-                  Yes, Delete All
-                </Button>
-              </ModalFooter>
-            </>
-          )}
-        </ModalContent>
-      </Modal>
+      
     </>
   );
 };
