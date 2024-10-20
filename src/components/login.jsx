@@ -106,6 +106,11 @@ const Login = () => {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
+        <br />
+        {/* copy rights*/}
+        <p className="text-gray-500 text-center mb-4">
+        © 2024 Code Sync Professionals . All rights reserved.
+          </p>
       </div>
 
       {/* MUI Snackbar and Alert */}
