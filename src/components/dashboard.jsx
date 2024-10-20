@@ -18,7 +18,8 @@ import Alert from "@mui/material/Alert";
 import Pagination from "@mui/material/Pagination";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress"; // For loading animation
-import { Box } from "@mui/material";
+import { Box, Grid, Typography, Paper } from "@mui/material"; // Import Material-UI components
+// import { useNavigate } from "react-router-dom;s
 
 const Dashboard = () => {
   const [students, setStudents] = useState([]);
@@ -153,11 +154,16 @@ const Dashboard = () => {
     setOpenSnackbar(false);
   };
 
-  
+// Count present and absent students
+  const presentCount = filteredStudents.filter(
+    (student) => student.present === "Present"
+  ).length;
+  const absentCount = filteredStudents.length - presentCount;
 
+  // for downloading excel. 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(students);
-    worksheet['E1'].v = formattedDate;
+    worksheet["E1"].v = formattedDate;
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Present Students");
     const timestamp = new Date().toISOString().replace(/[:.-]/g, "_");
@@ -198,9 +204,11 @@ const Dashboard = () => {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0"); // getMonth() returns 0-11
   const day = String(today.getDate()).padStart(2, "0");
-  
+
   const formattedDate = `${day}-${month}-${year}`;
   console.log(formattedDate);
+
+
   return (
     <>
       <Navbar
@@ -271,6 +279,51 @@ const Dashboard = () => {
           Update All Attendance
         </button>
 
+        
+            {/* Present/Absent Counts with Interactive Boxes */}
+        <Grid container spacing={3} className="my-5">
+          <Grid item xs={12} sm={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                padding: 2,
+                backgroundColor: "#e0f7fa",
+                textAlign: "center",
+                borderRadius: "8px",
+                transition: "transform 0.3s ease",
+                "&:hover": { transform: "scale(1.05)" },
+              }}
+            >
+              <Typography variant="h6" sx={{ color: "#00796b" }}>
+                Present Students
+              </Typography>
+              <Typography variant="h4" sx={{ color: "#00796b", fontWeight: "bold" }}>
+                {presentCount}
+              </Typography>
+            </Paper>
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Paper
+              elevation={3}
+              sx={{
+                padding: 2,
+                backgroundColor: "#ffebee",
+                textAlign: "center",
+                borderRadius: "8px",
+                transition: "transform 0.3s ease",
+                "&:hover": { transform: "scale(1.05)" },
+              }}
+            >
+              <Typography variant="h6" sx={{ color: "#c62828" }}>
+                Absent Students
+              </Typography>
+              <Typography variant="h4" sx={{ color: "#c62828", fontWeight: "bold" }}>
+                {absentCount}
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
         <table className="min-w-full bg-white mb-10">
           <thead>
             <tr>
@@ -289,11 +342,15 @@ const Dashboard = () => {
                 <td className="text-center py-2">{student.userId}</td>
                 <td className="text-center py-2">{student.name}</td>
                 <td className="text-center py-2">{student.department}</td>
-                <td className={`text-center py-2 ${
-                      student.present === "Present"
-                        ? "bg-green-200"
-                        : "bg-red-200"
-                    } `}>{student.present}</td>
+                <td
+                  className={`text-center py-2 ${
+                    student.present === "Present"
+                      ? "bg-green-200"
+                      : "bg-red-200"
+                  } `}
+                >
+                  {student.present}
+                </td>
                 <td className="text-center py-2">
                   <button
                     className={`px-4 py-1 rounded ${
@@ -338,8 +395,6 @@ const Dashboard = () => {
           </Alert>
         </Snackbar>
       </div>
-
-      
     </>
   );
 };
