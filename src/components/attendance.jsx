@@ -85,12 +85,6 @@ const Attendance = () => {
   return (
     <>
       <Navbar title={`Attendance - ${batchName}`} showBackButton={true} />
-      <button
-        onClick={goToDashboard}
-        className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700"
-      >
-        Go to Dashboard
-      </button>
       <div className="p-10 flex flex-col justify-center items-center">
         <button
           onClick={handleToggleAttendance}
@@ -98,6 +92,12 @@ const Attendance = () => {
         >
           {isQrVisible ? "Stop Attendance" : `Mark Attendance for ${batchName}`}
         </button>
+      <button
+        onClick={goToDashboard}
+        className="mt-4 bg-green-500 text-white py-2 px-4 rounded-md hover:bg-green-700"
+      >
+        Go to Dashboard
+      </button>
 
         {isQrVisible && (
           <div className="mt-10">
@@ -105,11 +105,11 @@ const Attendance = () => {
               <QRCode
                 value={qrToken} // The token for the QR code
                 size={512} // Size of the QR code, adjust as needed
-                level="L" // Error correction level (H for highest level)
+                 level="L" // Error correction level (H for highest level)
               />
             )}
             <p className="mt-4 text-lg text-red-600">
-              {isRegenerating ? "Regenerating QR..." : `QR code will refresh in ${timer} seconds`}
+              {isRegenerating ? "Regenerating QR..." : ``}
             </p>
           </div>
         )}

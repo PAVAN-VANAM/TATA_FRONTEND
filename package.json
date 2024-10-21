@@ -19,6 +19,8 @@
     "axios": "^1.7.7",
     "chart.js": "^4.4.5",
     "dotenv": "^16.4.5",
+    "framer-motion": "^11.11.9",
+    "lucide-react": "^0.453.0",
     "qrcode": "^1.5.4",
     "qrcode.react": "^4.0.1",
     "react": "^18.3.1",

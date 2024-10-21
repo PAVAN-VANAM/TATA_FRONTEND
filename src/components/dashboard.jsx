@@ -329,7 +329,7 @@ const Dashboard = () => {
             </Paper>
           </Grid>
         </Grid>
-        <table className="min-w-full bg-blue-100 mb-10">
+        <table className="min-w-full bg-blue-100 mb-10  rounded-lg">
           <thead>
             <tr>
               <th className="py-2">ID</th>
