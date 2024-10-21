@@ -44,13 +44,18 @@ const Dashboard = () => {
     const fetchAttendanceData = async () => {
       setLoading(true);
       try {
+        console.log(batchName);
+        
         const response = await axios.post(
           `${import.meta.env.VITE_API}/profile/view`,
           {
             batch_name: batchName,
           }
         );
+
+        console.log(response);
         const allAttendanceRecords = response.data;
+        
 
         const formattedStudents = allAttendanceRecords.map((record, index) => ({
           id: index + 1,
@@ -68,19 +73,19 @@ const Dashboard = () => {
       }
     };
 
-    const fetchDepartments = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_API}/departments`
-        ); // Adjust this endpoint as needed
-        setDepartments(response.data);
-      } catch (error) {
-        console.error("Error fetching departments:", error.message);
-      }
-    };
+    // const fetchDepartments = async () => {
+    //   try {
+    //     const response = await axios.get(
+    //       `${import.meta.env.VITE_API}/departments`
+    //     ); // Adjust this endpoint as needed
+    //     setDepartments(response.data);
+    //   } catch (error) {
+    //     console.error("Error fetching departments:", error.message);
+    //   }
+    // };
 
+    // fetchDepartments();
     fetchAttendanceData();
-    fetchDepartments();
   }, [fetch]);
 
   // Filter students based on search, department, and attendance status

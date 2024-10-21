@@ -8,7 +8,7 @@ import Login from './components/login';
 import Attendance from './components/attendance';
 import Dashboard from './components/dashboard';
 import Classes from './components/classes';
-import AttendanceGraph from './components/attendancegraph';
+
 
 
 const r=createBrowserRouter([
